@@ -1,0 +1,104 @@
+
+@csrf_exempt
+@require_POST
+def _answer(request: HttpRequest) -> HttpResponse:
+    validate_django_request(request)
+
+    vr = VoiceResponse()
+    next_url = request.build_absolute_uri('')
+    digits = request.POST.get('Digits')
+
+    # Process user command
+
+    command = request.GET.get('command')
+    if command is None:
+        vr.say('Welcome to movie info!')
+        selected_theater_id = None
+        selected_movie_id = None
+
+    elif command == 'choose-theater':
+        # User didn't press any key.
+        if digits is None:
+            vr.say('Please use the keypad to make a selection.')
+
+        # Validate the user selection
+        elif Theater.objects.filter(id=digits).exists():
+            selected_theater_id = digits
+
+        else:
+            vr.say('Please select a theater from the list.')
+            selected_theater_id = None
+
+        # At this point the user haven't selected a movie yet
+        selected_movie_id = None
+
+    elif command == 'choose-movie':
+        # Use already selected a theater
+        selected_theater_id = request.GET['theater']
+
+        # User didn't press any key.
+        if digits is None:
+            vr.say('Please use the keypad to make a selection.')
+
+        # Validate the user selection
+        elif Movie.objects.filter(id=digits).exists():
+            selected_movie_id = digits
+        else:
+            vr.say('Please select a movie from the list.')
+            selected_movie_id = None
+
+    else:
+        logger.warning('Received unknown command "%s"', command)
+        selected_theater_id = None
+        selected_movie_id = None
+
+    # Provide instructions for the next step
+
+    if selected_theater_id is None:
+        with vr.gather(
+            action=f'{next_url}?command=choose-theater',
+            finish_on_key='#',
+            timeout=5,
+            action_on_empty_result=True,
+        ) as gather:
+            gather.say('Please choose a theater and press #')
+            for t in Theater.objects.order_by('id'):
+                gather.say(f'For {t.name} at {t.address} press {t.id}')
+
+    elif selected_movie_id is None:
+        with vr.gather(
+            action=f'{next_url}?theater={selected_theater_id}&command=choose-movie',
+            finish_on_key='#',
+            timeout=5,
+            action_on_empty_result=True,
+        ) as gather:
+            gather.say('Please choose a movie and press #')
+            for m in Movie.objects.order_by('id'):
+                gather.say(f'For {m.title} press {m.id}')
+
+    else:
+        # User selected movie and theater, search shows in the next 12 hours:
+        from_time = timezone.now()
+        until_time = from_time + datetime.timedelta(hours=12)
+        shows = list(
+            Show.objects.filter(
+                theater_id=selected_theater_id,
+                movie_id=selected_movie_id,
+                starts_at__range=(from_time, until_time),
+            ).select_related(
+                'theater',
+                'movie',
+            ).order_by('starts_at')
+        )
+        if len(shows) == 0:
+            vr.say('Sorry, the movie is not playing any time soon in this theater.')
+        else:
+            theater = shows[0].theater
+            movie = shows[0].movie
+            showtimes = ', '.join(show.starts_at.time().strftime('%I:%M%p') for show in shows)
+            vr.say(f'The movie {movie.title} will be playing at {theater.name} at {showtimes}')
+
+        vr.say('Thank you for using movie info!')
+        vr.hangup()
+
+    return HttpResponse(str(vr), content_type='text/xml')
