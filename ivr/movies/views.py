@@ -2,6 +2,7 @@ import datetime
 
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpRequest, HttpResponse
+from django.conf import settings
 from django.utils import timezone
 from django.shortcuts import reverse
 from django.views.decorators.csrf import csrf_exempt
@@ -34,6 +35,7 @@ def validate_django_request(request: HttpRequest):
 @require_POST
 @csrf_exempt
 def choose_theater(request: HttpRequest) -> HttpResponse:
+    validate_django_request(request)
     vr = VoiceResponse()
     vr.say('Welcome to movie info!')
 
@@ -107,7 +109,7 @@ def list_showtimes(request: HttpRequest) -> HttpResponse:
 
     except Movie.DoesNotExist:
         vr.say('Please select a movie from the list.')
-        vr.redirect(f'{reverse("choose-movie")}?theater={theater_id}')
+        vr.redirect(f'{reverse("choose-movie")}?theater={theater.id}')
 
     else:
         # User selected movie and theater, search shows in the next 12 hours:
