@@ -3,3 +3,4 @@
 *.sqlite3
 .secrets
 .mypy_cache
+.vscode
