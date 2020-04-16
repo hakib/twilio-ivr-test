@@ -10,12 +10,15 @@ from django.test import Client
 from ..models import Theater, Movie
 
 
+TwilioPhoneCall = Generator[Union[str, None], Union[str, None], None]
+
+
 def initiate_twilio_phone_call(
     start_url: str,
     call_sid: str,
     from_number: str,
     client: Client,
-) -> Generator[Union[str, None], Union[str, None], None]:
+) -> TwilioPhoneCall:
     next_url = start_url
     next_payload: Dict[str, str] = {}
 
@@ -68,7 +71,7 @@ def initiate_twilio_phone_call(
 
 
 @pytest.fixture
-def showtimes_phone_call(client: Client) -> Generator[Union[str, None], Union[str, None], None]:
+def showtimes_phone_call(client: Client) -> TwilioPhoneCall:
     return initiate_twilio_phone_call(
         start_url = reverse('choose-theater'),
         call_sid = 'call-sid-1',
@@ -83,7 +86,7 @@ def test_should_tell_caller_there_are_no_showtimes(
     theater_B: Theater,
     movie_A: Movie,
     movie_B: Movie,
-    showtimes_phone_call: Client,
+    showtimes_phone_call: TwilioPhoneCall,
 ) -> None:
     assert showtimes_phone_call.send(None) == 'Welcome to movie info!'
     assert showtimes_phone_call.send(None) == 'Please choose a theater and press #'
