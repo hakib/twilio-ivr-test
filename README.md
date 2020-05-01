@@ -3,7 +3,7 @@
 Source code for the article series posted on the Twilio blog:
 
 - [Building an Interactive Voice Response (IVR) System with Python, Django and Twilio](https://www.twilio.com/blog/building-interactive-voice-response-ivr-system-python-django-twilio)
-- [Testing a Twilio IVR System With Python and Pytest](#TBD)
+- [Testing a Twilio IVR System With Python and pytest](https://www.twilio.com/blog/testing-twilio-ivr-system-python-pytest)
 
 [![Building an Interactive Voice Response (IVR) System with Python, Django and Twilio](cover.png)](https://www.twilio.com/blog/building-interactive-voice-response-ivr-system-python-django-twilio)
 
