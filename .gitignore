@@ -5,3 +5,6 @@
 .mypy_cache
 .pytest_cache
 .vscode
+.coverage
+.coverage.*
+/htmlcov/

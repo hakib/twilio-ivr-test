@@ -18,6 +18,7 @@ check: lint pipcheck test
 coverage:
 	coverage erase
 	coverage run -m pytest ivr/
+	coverage report | grep '^Name\|^TOTAL'
 	coverage html
 
 init:
